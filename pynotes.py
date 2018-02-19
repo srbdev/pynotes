@@ -3,21 +3,25 @@ import sys, tempfile
 from subprocess import call
 import sqlite3
 from datetime import datetime
+import os
 
-database = "notes.db"
+DATABASE = "notes.db"
+EDITOR = os.environ.get("EDITOR", "vim")
 
 parser = argparse.ArgumentParser(description="Write and manage notes from the command line.")
 parser.add_argument("-c", "--create", help="create a new topic", metavar="topic")
 parser.add_argument("-a", "--add", help="add a note to a topic", metavar="topic")
 
-
 def get_connection():
-    return sqlite3.connect(database)
+    return sqlite3.connect(DATABASE)
 
-def run_query(query):
+def run_query(query, tuple=None):
     conn = get_connection()
 
-    conn.execute(query)
+    if tuple is not None:
+        conn.execute(query, tuple)
+    else:
+        conn.execute(query)
     conn.commit()
     conn.close()
 
@@ -27,16 +31,12 @@ def create_topic(name):
 
 def add_note(name):
     with tempfile.NamedTemporaryFile(suffix=".tmp") as tf:
-        call(["vim", tf.name])
+        call([EDITOR, tf.name])
         tf.seek(0)
         note = tf.read()
         timestamp = datetime.utcnow()
 
-        conn = get_connection()
-        conn.execute("INSERT INTO %s (note, created_at, modified_at) VALUES (?, ?, ?)" % name, (note, timestamp, timestamp))
-        conn.commit()
-        conn.close()
-
+        run_query("INSERT INTO %s (note, created_at, modified_at) VALUES (?, ?, ?)" % name, (note, timestamp, timestamp))
 
 args = parser.parse_args()
 
