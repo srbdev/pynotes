@@ -12,6 +12,12 @@ parser = argparse.ArgumentParser(description="Write and manage notes from the co
 parser.add_argument("-c", "--create", help="create a new topic", metavar="topic")
 parser.add_argument("-a", "--add", help="add a note to a topic", metavar="topic")
 
+def run_editor():
+    with tempfile.NamedTemporaryFile(suffix=".tmp") as tf:
+        call([EDITOR, tf.name])
+        tf.seek(0)
+        return tf.read()
+
 def get_connection():
     return sqlite3.connect(DATABASE)
 
@@ -30,13 +36,9 @@ def create_topic(name):
     run_query(sql)
 
 def add_note(name):
-    with tempfile.NamedTemporaryFile(suffix=".tmp") as tf:
-        call([EDITOR, tf.name])
-        tf.seek(0)
-        note = tf.read()
-        timestamp = datetime.utcnow()
-
-        run_query("INSERT INTO %s (note, created_at, modified_at) VALUES (?, ?, ?)" % name, (note, timestamp, timestamp))
+    note = run_editor()
+    timestamp = datetime.utcnow()
+    run_query("INSERT INTO %s (note, created_at, modified_at) VALUES (?, ?, ?)" % name, (note, timestamp, timestamp))
 
 args = parser.parse_args()
 
