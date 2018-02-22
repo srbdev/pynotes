@@ -12,6 +12,7 @@ parser = argparse.ArgumentParser(description="Write and manage notes from the co
 parser.add_argument("-c", "--create", help="create a new topic", metavar="topic")
 parser.add_argument("-a", "--add", help="add a note to a topic", metavar="topic")
 parser.add_argument("-l", "--list", help="list notes from a topic", metavar="topic")
+parser.add_argument("-d", "--delete", help="delete a note from a topic", nargs=2, metavar=("id", "topic"))
 
 def run_editor():
     with tempfile.NamedTemporaryFile(suffix=".tmp") as tf:
@@ -53,21 +54,27 @@ def add_note(name):
     runsql("INSERT INTO %s (note, created_at, modified_at) VALUES (?, ?, ?)" % name, (note, timestamp, timestamp))
 
 def list_notes(topic):
-    sql = """SELECT * FROM %s""" % topic
+    sql = "SELECT * FROM %s" % topic
     rows = fetchall(sql)
     str_length = 25
 
     for row in rows:
         print "(%s) %s - last modified: %s" % (row[0], (row[1][:str_length] + "...").encode('unicode_escape') if len(row[1]) > str_length+3 else row[1].encode('unicode_escape'), row[3])
 
+def delete_note(args):
+    a = raw_input("Are you sure you want to delete note with ID %s from %s? " % (args[0], args[1]))
+
+    if a == "y" or a == "Y" or a == "yes" or a == "YES":
+        sql = "DELETE FROM %s WHERE id = %s" % (args[1], args[0])
+        runsql(sql)
+    else:
+        print "Aborted!"
+
 
 args = parser.parse_args()
 
-if args.add is not None:
-    add_note(args.add)
-elif args.create is not None:
-    create_topic(args.create)
-elif args.list is not None:
-    list_notes(args.list)
-else:
-    print parser.print_help()
+if args.add is not None:        add_note(args.add)
+elif args.create is not None:   create_topic(args.create)
+elif args.list is not None:     list_notes(args.list)
+elif args.delete is not None:   delete_note(args.delete)
+else:                           print parser.print_help()
