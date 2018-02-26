@@ -14,9 +14,14 @@ parser.add_argument("-a", "--add", help="add a note to a topic", metavar="topic"
 parser.add_argument("-l", "--list", help="list notes from a topic", metavar="topic")
 parser.add_argument("-d", "--delete", help="delete a note from a topic", nargs=2, metavar=("id", "topic"))
 parser.add_argument("-t", "--topics", help="list all available topics", action="store_true")
+parser.add_argument("-e", "--edit", help="edit a note from a topic", nargs=2, metavar=("id", "topic"))
 
-def run_editor():
+def run_editor(content=None):
     with tempfile.NamedTemporaryFile(suffix=".tmp") as tf:
+        if content is not None:
+            tf.write(content)
+            tf.flush()
+
         call([EDITOR, tf.name])
         tf.seek(0)
         return tf.read()
@@ -45,6 +50,17 @@ def fetchall(query, tuple=None):
 
     return cur.fetchall()
 
+def fetchone(query, tuple=None):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    if tuple is not None:
+        cur.execute(query, tuple)
+    else:
+        cur.execute(query)
+
+    return cur.fetchone()
+
 def create_topic(name):
     sql = """CREATE TABLE %s(id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, note TEXT, created_at TIMESTAMP, modified_at TIMESTAMP)""" % name.strip()
     runsql(sql)
@@ -71,6 +87,14 @@ def delete_note(args):
     else:
         print "Aborted!"
 
+def edit_note(args):
+    sql = "SELECT note FROM %s WHERE id = %s" % (args[1], args[0])
+    note = fetchone(sql)
+
+    new_note = run_editor("%s" % note)
+    modified_at = datetime.utcnow()
+    runsql("UPDATE %s SET note=?, modified_at=? WHERE id=?" % args[1], (new_note, modified_at, args[0]))
+
 def list_topics():
     sql = "SELECT name FROM sqlite_master WHERE type='table'"
     tables = fetchall(sql)
@@ -86,5 +110,6 @@ if args.add is not None:        add_note(args.add)
 elif args.create is not None:   create_topic(args.create)
 elif args.list is not None:     list_notes(args.list)
 elif args.delete is not None:   delete_note(args.delete)
+elif args.edit is not None:     edit_note(args.edit)
 elif args.topics is True:       list_topics()
 else:                           print parser.print_help()
