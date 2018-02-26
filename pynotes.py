@@ -4,8 +4,9 @@ from subprocess import call
 import sqlite3
 from datetime import datetime
 import os
+from os.path import expanduser
 
-DATABASE = "notes.db"
+DATABASE = expanduser("~") + "/.pynotes.db"
 EDITOR = os.environ.get("EDITOR", "vim")
 
 parser = argparse.ArgumentParser(description="Write and manage notes from the command line.")
@@ -27,7 +28,11 @@ def run_editor(content=None):
         return tf.read()
 
 def get_connection():
-    return sqlite3.connect(DATABASE)
+    if os.path.isfile(DATABASE):
+        return sqlite3.connect(DATABASE)
+    else:
+        print("No database present! Use the --init option to create one.")
+        sys.exit()
 
 def runsql(query, tuple=None):
     conn = get_connection()
