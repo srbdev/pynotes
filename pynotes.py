@@ -13,6 +13,7 @@ parser.add_argument("-c", "--create", help="create a new topic", metavar="topic"
 parser.add_argument("-a", "--add", help="add a note to a topic", metavar="topic")
 parser.add_argument("-l", "--list", help="list notes from a topic", metavar="topic")
 parser.add_argument("-d", "--delete", help="delete a note from a topic", nargs=2, metavar=("id", "topic"))
+parser.add_argument("-t", "--topics", help="list all available topics", action="store_true")
 
 def run_editor():
     with tempfile.NamedTemporaryFile(suffix=".tmp") as tf:
@@ -70,6 +71,14 @@ def delete_note(args):
     else:
         print "Aborted!"
 
+def list_topics():
+    sql = "SELECT name FROM sqlite_master WHERE type='table'"
+    tables = fetchall(sql)
+
+    for table in tables:
+        if ("%s" % table) != "sqlite_sequence":
+            print "%s" % table
+
 
 args = parser.parse_args()
 
@@ -77,4 +86,5 @@ if args.add is not None:        add_note(args.add)
 elif args.create is not None:   create_topic(args.create)
 elif args.list is not None:     list_notes(args.list)
 elif args.delete is not None:   delete_note(args.delete)
+elif args.topics is True:       list_topics()
 else:                           print parser.print_help()
