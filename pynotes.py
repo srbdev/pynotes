@@ -10,12 +10,13 @@ DATABASE = expanduser("~") + "/.pynotes.db"
 EDITOR = os.environ.get("EDITOR", "vim")
 
 parser = argparse.ArgumentParser(description="Write and manage notes from the command line.")
+parser.add_argument("--init", help="initialize pynotes for the user", action="store_true")
 parser.add_argument("-c", "--create", help="create a new topic", metavar="topic")
+parser.add_argument("-t", "--topics", help="list all available topics", action="store_true")
 parser.add_argument("-a", "--add", help="add a note to a topic", metavar="topic")
 parser.add_argument("-l", "--list", help="list notes from a topic", metavar="topic")
-parser.add_argument("-d", "--delete", help="delete a note from a topic", nargs=2, metavar=("id", "topic"))
-parser.add_argument("-t", "--topics", help="list all available topics", action="store_true")
 parser.add_argument("-e", "--edit", help="edit a note from a topic", nargs=2, metavar=("id", "topic"))
+parser.add_argument("-d", "--delete", help="delete a note from a topic", nargs=2, metavar=("id", "topic"))
 
 def run_editor(content=None):
     with tempfile.NamedTemporaryFile(suffix=".tmp") as tf:
@@ -31,7 +32,7 @@ def get_connection():
     if os.path.isfile(DATABASE):
         return sqlite3.connect(DATABASE)
     else:
-        print("No database present! Use the --init option to create one.")
+        print "No database present! Use the --init option to create one."
         sys.exit()
 
 def runsql(query, tuple=None):
@@ -65,6 +66,13 @@ def fetchone(query, tuple=None):
         cur.execute(query)
 
     return cur.fetchone()
+
+def init():
+    try:
+        sqlite3.connect(DATABASE)
+    except Exception:
+        print "Error while creating the database. Please check your permissions!"
+        sys.exit()
 
 def create_topic(name):
     sql = """CREATE TABLE %s(id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, note TEXT, created_at TIMESTAMP, modified_at TIMESTAMP)""" % name.strip()
@@ -117,4 +125,5 @@ elif args.list is not None:     list_notes(args.list)
 elif args.delete is not None:   delete_note(args.delete)
 elif args.edit is not None:     edit_note(args.edit)
 elif args.topics is True:       list_topics()
+elif args.init is True:         init()
 else:                           print parser.print_help()
