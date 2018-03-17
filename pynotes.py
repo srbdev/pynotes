@@ -32,7 +32,7 @@ def get_connection():
     if os.path.isfile(DATABASE):
         return sqlite3.connect(DATABASE)
     else:
-        print "No database present! Use the --init option to create one."
+        print("No database present! Use the --init option to create one.")
         sys.exit()
 
 def runsql(query, tuple=None):
@@ -71,7 +71,7 @@ def init():
     try:
         sqlite3.connect(DATABASE)
     except Exception:
-        print "Error while creating the database. Please check your permissions!"
+        print("Error while creating the database. Please check your permissions!")
         sys.exit()
 
 def create_topic(name):
@@ -89,7 +89,7 @@ def list_notes(topic):
     str_length = 25
 
     for row in rows:
-        print "(%s) %s - last modified: %s" % (row[0], (row[1][:str_length] + "...").encode('unicode_escape') if len(row[1]) > str_length+3 else row[1].encode('unicode_escape'), row[3])
+        print("(%s) %s - last modified: %s" % (row[0], (row[1][:str_length] + "...").encode('unicode_escape') if len(row[1]) > str_length+3 else row[1].encode('unicode_escape'), row[3]))
 
 def delete_note(args):
     a = raw_input("Are you sure you want to delete note with ID %s from %s? " % (args[0], args[1]))
@@ -98,7 +98,7 @@ def delete_note(args):
         sql = "DELETE FROM %s WHERE id = %s" % (args[1], args[0])
         runsql(sql)
     else:
-        print "Aborted!"
+        print("Aborted!")
 
 def edit_note(args):
     sql = "SELECT note FROM %s WHERE id = %s" % (args[1], args[0])
@@ -114,7 +114,7 @@ def list_topics():
 
     for table in tables:
         if ("%s" % table) != "sqlite_sequence":
-            print "%s" % table
+            print("%s" % table)
 
 
 args = parser.parse_args()
@@ -126,4 +126,4 @@ elif args.delete is not None:   delete_note(args.delete)
 elif args.edit is not None:     edit_note(args.edit)
 elif args.topics is True:       list_topics()
 elif args.init is True:         init()
-else:                           print parser.print_help()
+else:                           print(parser.print_help())
