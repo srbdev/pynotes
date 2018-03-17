@@ -17,6 +17,7 @@ parser.add_argument("-a", "--add", help="add a note to a topic", metavar="topic"
 parser.add_argument("-l", "--list", help="list notes from a topic", metavar="topic")
 parser.add_argument("-e", "--edit", help="edit a note from a topic", nargs=2, metavar=("id", "topic"))
 parser.add_argument("-d", "--delete", help="delete a note from a topic", nargs=2, metavar=("id", "topic"))
+parser.add_argument("--delete-topic", help="delete a topic", metavar="name")
 
 def run_editor(content=None):
     with tempfile.NamedTemporaryFile(suffix=".tmp") as tf:
@@ -92,13 +93,22 @@ def list_notes(topic):
         print("(%s) %s - last modified: %s" % (row[0], (row[1][:str_length] + "...").encode('unicode_escape') if len(row[1]) > str_length+3 else row[1].encode('unicode_escape'), row[3]))
 
 def delete_note(args):
-    a = raw_input("Are you sure you want to delete note with ID %s from %s? " % (args[0], args[1]))
+    a = input("Are you sure you want to delete note with ID %s from %s? " % (args[0], args[1]))
 
     if a == "y" or a == "Y" or a == "yes" or a == "YES":
         sql = "DELETE FROM %s WHERE id = %s" % (args[1], args[0])
         runsql(sql)
     else:
         print("Aborted!")
+
+def delete_topic(arg):
+    a = input("Are you sure you want to delete topic %s? " % arg)
+
+    if a == "y" or a == "Y" or a == "yes" or a == "YES":
+        sql = "DROP TABLE %s" % arg
+        runsql(sql)
+    else:
+        print("Aborted")
 
 def edit_note(args):
     sql = "SELECT note FROM %s WHERE id = %s" % (args[1], args[0])
@@ -119,11 +129,12 @@ def list_topics():
 
 args = parser.parse_args()
 
-if args.add is not None:        add_note(args.add)
-elif args.create is not None:   create_topic(args.create)
-elif args.list is not None:     list_notes(args.list)
-elif args.delete is not None:   delete_note(args.delete)
-elif args.edit is not None:     edit_note(args.edit)
-elif args.topics is True:       list_topics()
-elif args.init is True:         init()
-else:                           print(parser.print_help())
+if args.add is not None:                add_note(args.add)
+elif args.create is not None:           create_topic(args.create)
+elif args.list is not None:             list_notes(args.list)
+elif args.delete is not None:           delete_note(args.delete)
+elif args.delete_topic is not None:     delete_topic(args.delete_topic)
+elif args.edit is not None:             edit_note(args.edit)
+elif args.topics is True:               list_topics()
+elif args.init is True:                 init()
+else:                                   print(parser.print_help())
