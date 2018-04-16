@@ -46,6 +46,14 @@ def runsql(query, tuple=None):
     conn.commit()
     conn.close()
 
+def is_table(name):
+    try:
+        runsql("SELECT * FROM %s" % name)
+        return True
+    except:
+        print("Topic %s does not exist" % name)
+        return False
+
 def fetchall(query, tuple=None):
     conn = get_connection()
     cur = conn.cursor()
@@ -80,12 +88,20 @@ def create_topic(name):
     runsql(sql)
 
 def add_note(name):
+    if not is_table(name):
+        print("Aborted!")
+        return
+
     note = run_editor()
     note = note.decode("utf-8") # convert from bytes to string
     timestamp = datetime.utcnow()
     runsql("INSERT INTO %s (note, created_at, modified_at) VALUES (?, ?, ?)" % name, (note, timestamp, timestamp))
 
 def list_notes(topic):
+    if not is_table(topic):
+        print("Aborted!")
+        return
+
     sql = "SELECT * FROM %s" % topic
     rows = fetchall(sql)
     str_length = 25
@@ -94,6 +110,10 @@ def list_notes(topic):
         print("(%s) %s - last modified: %s" % (row[0], (row[1][:str_length].strip() + "...") if len(row[1]) > str_length+3 else row[1].strip(), row[3]))
 
 def delete_note(args):
+    if not is_table(args[1]):
+        print("Aborted!")
+        return
+
     a = input("Are you sure you want to delete note with ID %s from %s? " % (args[0], args[1]))
 
     if a == "y" or a == "Y" or a == "yes" or a == "YES":
@@ -103,6 +123,10 @@ def delete_note(args):
         print("Aborted!")
 
 def delete_topic(arg):
+    if not is_table(arg):
+        print("Aborted!")
+        return
+
     a = input("Are you sure you want to delete topic %s? " % arg)
 
     if a == "y" or a == "Y" or a == "yes" or a == "YES":
@@ -112,6 +136,10 @@ def delete_topic(arg):
         print("Aborted")
 
 def edit_note(args):
+    if not is_table(args[1]):
+        print("Aborted!")
+        return
+
     sql = "SELECT note FROM %s WHERE id = %s" % (args[1], args[0])
     note = fetchone(sql)
 
