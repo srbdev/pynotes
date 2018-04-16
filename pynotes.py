@@ -107,7 +107,7 @@ def list_notes(topic):
     str_length = 25
 
     for row in rows:
-        print("(%s) %s - last modified: %s" % (row[0], (row[1][:str_length].strip() + "...") if len(row[1]) > str_length+3 else row[1].strip(), row[3]))
+        print("(%s) %s - last modified: %s" % (row[0], (row[1][:str_length] + "...").encode("utf-8") if len(row[1]) > str_length+3 else row[1].encode("utf-8"), row[3]))
 
 def delete_note(args):
     if not is_table(args[1]):
@@ -143,7 +143,8 @@ def edit_note(args):
     sql = "SELECT note FROM %s WHERE id = %s" % (args[1], args[0])
     note = fetchone(sql)
 
-    new_note = run_editor("%s" % note)
+    new_note = run_editor(note[0].encode("utf-8"))
+    new_note = new_note.decode("utf-8") # convert from bytes to string
     modified_at = datetime.utcnow()
     runsql("UPDATE %s SET note=?, modified_at=? WHERE id=?" % args[1], (new_note, modified_at, args[0]))
 
