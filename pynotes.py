@@ -1,13 +1,13 @@
+import os
 import argparse
-import sys, tempfile
-from subprocess import call
 import sqlite3
 from datetime import datetime
-import os
 from os.path import expanduser
 
+import editor
+
+
 DATABASE = expanduser("~") + "/.pynotes.db"
-EDITOR = os.environ.get("EDITOR", "vim")
 
 parser = argparse.ArgumentParser(description="Write and manage notes from the command line.")
 parser.add_argument("--init", help="initialize pynotes for the user", action="store_true")
@@ -18,20 +18,6 @@ parser.add_argument("-l", "--list", help="list notes from a topic", metavar="top
 parser.add_argument("-e", "--edit", help="edit a note from a topic", nargs=2, metavar=("id", "topic"))
 parser.add_argument("-d", "--delete", help="delete a note from a topic", nargs=2, metavar=("id", "topic"))
 parser.add_argument("--delete-topic", help="delete a topic", metavar="name")
-
-def run_editor(mode=None, content=None):
-    with tempfile.NamedTemporaryFile(suffix=".tmp") as tf:
-        if content is not None:
-            tf.write(content)
-            tf.flush()
-
-        if mode is None:
-            call([EDITOR, tf.name])
-        elif mode == 'i':
-            call([EDITOR, "+star", tf.name])
-
-        tf.seek(0)
-        return tf.read()
 
 def get_connection():
     if os.path.isfile(DATABASE):
@@ -96,7 +82,7 @@ def add_note(name):
         print("Aborted!")
         return
 
-    note = run_editor('i')
+    note = editor.open('i')
     note = note.decode("utf-8") # convert from bytes to string
     timestamp = datetime.utcnow()
     runsql("INSERT INTO %s (note, created_at, modified_at) VALUES (?, ?, ?)" % name, (note, timestamp, timestamp))
@@ -152,7 +138,7 @@ def edit_note(args):
     sql = "SELECT note FROM %s WHERE id = %s" % (args[1], args[0])
     note = fetchone(sql)
 
-    new_note = run_editor('i', note[0].encode("utf-8"))
+    new_note = editor.open(None, note[0].encode("utf-8"))
     new_note = new_note.decode("utf-8") # convert from bytes to string
     modified_at = datetime.utcnow()
     runsql("UPDATE %s SET note=?, modified_at=? WHERE id=?" % args[1], (new_note, modified_at, args[0]))
