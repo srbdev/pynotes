@@ -107,7 +107,12 @@ def list_notes(topic):
     str_length = 25
 
     for row in rows:
-        print("(%s) %s - last modified: %s" % (row[0], (row[1][:str_length] + "...").encode("utf-8") if len(row[1]) > str_length+3 else row[1].encode("utf-8"), row[3]))
+        snippet = (row[1][:str_length] + "...").encode("utf-8") if len(row[1]) > str_length+3 else row[1].encode("utf-8")
+        snippet = snippet.decode("utf-8").replace("\n", " ")
+        snippet = snippet.replace("b'", "")
+        snippet = snippet.replace("'", "")
+
+        print("(%s) %s - last modified: %s" % (row[0], snippet, row[3]))
 
 def delete_note(args):
     if not is_table(args[1]):
