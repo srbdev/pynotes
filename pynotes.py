@@ -81,6 +81,7 @@ def create_topic(name):
 
 def add_note(name):
     note = run_editor()
+    note = note.decode("utf-8") # convert from bytes to string
     timestamp = datetime.utcnow()
     runsql("INSERT INTO %s (note, created_at, modified_at) VALUES (?, ?, ?)" % name, (note, timestamp, timestamp))
 
@@ -90,7 +91,7 @@ def list_notes(topic):
     str_length = 25
 
     for row in rows:
-        print("(%s) %s - last modified: %s" % (row[0], (row[1][:str_length] + "...").encode('unicode_escape') if len(row[1]) > str_length+3 else row[1].encode('unicode_escape'), row[3]))
+        print("(%s) %s - last modified: %s" % (row[0], (row[1][:str_length].strip() + "...") if len(row[1]) > str_length+3 else row[1].strip(), row[3]))
 
 def delete_note(args):
     a = input("Are you sure you want to delete note with ID %s from %s? " % (args[0], args[1]))
